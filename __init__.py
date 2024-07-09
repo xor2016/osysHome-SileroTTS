@@ -13,7 +13,8 @@ from app.core.main.BasePlugin import BasePlugin
 from plugins.SileroTTS.forms.SettingForms import SettingsForm
 from app.core.lib.common import playSound
 from app.core.lib.cache import  findInCache, copyToCache, getCacheDir
-
+from plugins.SileroTTS.number2word import all_num_to_text
+import time
 class SileroTTS(BasePlugin):
 
     def __init__(self,app):
@@ -34,12 +35,14 @@ class SileroTTS(BasePlugin):
             settings.speaker.data = self.config.get("speaker",'xenia')
             settings.put_accent.data = self.config.get("put_accent", 1)
             settings.put_yo.data = self.config.get("put_yo", 1)
+            settings.auto_num2word.data = self.config.get("auto_num2word", 1)
         else:
             if settings.validate_on_submit():
                 self.config["sample_rate"] = settings.sample_rate.data
                 self.config["speaker"] = settings.speaker.data
                 self.config["put_accent"] = settings.put_accent.data
                 self.config["put_yo"] = settings.put_yo.data
+                self.config["auto_num2word"] = settings.auto_num2word.data
                 self.saveConfig()
         content = {
             "form": settings,
@@ -47,7 +50,8 @@ class SileroTTS(BasePlugin):
         return self.render('main_stts.html', content)
     
     def say(self, message, level=0, image: str = None, destination=None):
-        
+        if int(self.config.get("auto_num2word",1)) == 1:
+            message = all_num_to_text(message) # autoreplace nums to words
         hash = hashlib.md5(message.encode('utf-8')).hexdigest()
 
         # файл с кешированным аудио
@@ -84,6 +88,9 @@ class SileroTTS(BasePlugin):
         # Если файл существует и не является пустым, обрабатываем его
         if cached_file_name and os.path.getsize(cached_file_name):
             playSound(cached_file_name, level)
+            #длинельность звучания, сек = размер файла, байт/sample_rate/2
+            wait = os.path.getsize(cached_file_name)/int(self.config.get("sample_rate", 24000))/2
+            time.sleep(wait+0.5)
             
                 
 

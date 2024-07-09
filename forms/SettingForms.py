@@ -8,4 +8,5 @@ class SettingsForm(FlaskForm):
     speaker = SelectField('Диктор', validators=[DataRequired()],choices=['aidar', 'baya', 'kseniya', 'xenia', 'eugene', 'random'])
     put_accent = SelectField('Автоударение', validators=[DataRequired()], choices=[0,1])
     put_yo = SelectField('Обработка Ё', validators=[DataRequired()], choices=[0,1])
+    auto_num2word = SelectField('Авто перевод чисел в текст (эксперимент)', validators=[DataRequired()], choices=[0,1])
     submit = SubmitField('Submit')
