@@ -139,30 +139,47 @@ def f_ctime():
     text += num2text(int(now.minute), male_units) + '.'
     return text
 
+def convert_time(match_obj):
+    if match_obj.group() is not None:
+        text = str(match_obj.group())
+        parts = text.split(":")
+        hr = int(parts[0])
+        mn = int(parts[1])
+        hr_units = ((u'час', u'часа', u'часов'), 'm')
+        text = num2text(hr, hr_units) + ' '
+        mn_units = ((u'минута', u'минуты', u'минут'), 'f')
+        text += num2text(mn, mn_units) + ' '
+        return text
+
 def convert_one_num_float(match_obj):
     if match_obj.group() is not None:
         text = str(match_obj.group())
         return d2t(float(match_obj.group()))
+
 def convert_grad(match_obj):
     if match_obj.group() is not None:    
         text = str(match_obj.group())
         text = text.replace("°","")
         return num2text(int(text),((u'градус', u'градуса', u'градусов'), 'm'))
+
 def convert_proc(match_obj):
     if match_obj.group() is not None:    
         text = str(match_obj.group())
         text = text.replace("%"," ")
         return num2text(int(text),((u'процент', u'процента', u'процентов'), 'm'))
+
 def convert_ms(match_obj):
     if match_obj.group() is not None:    
         text = str(match_obj.group())
         text = text.replace(" м/с"," ")
-        return num2text(int(text),((u'метр в секунду', u'метра в секунду', u'метров в секунду'), 'm'))    
+        return num2text(int(text),((u'метр в секунду', u'метра в секунду', u'метров в секунду'), 'm'))
+    
 def convert_pt(match_obj):
     if match_obj.group() is not None:    
         text = str(match_obj.group())
         text = text.replace(" мм рт.ст."," ")
-        return num2text(int(text),((u'миллиметр ', u'миллиметра ', u'миллиметров'), 'm'))  
+        return num2text(int(text),((u'миллиметр ', u'миллиметра ', u'миллиметров'), 'm'))
+  
 def convert_diapazon(match_obj):
     if match_obj.group() is not None:
         text = str(match_obj.group())
@@ -188,6 +205,7 @@ def all_num_to_text(text:str) -> str:
     text = re.sub(r'[\d]+%',convert_proc, text)
     text = re.sub(r'[\d]+ м\/с',convert_ms, text)
     text = re.sub(r'[\d]+ мм рт.ст.',convert_pt, text)
+    text = re.sub(r'[\d]+:[\d]+',convert_time, text)
     text = re.sub(r'[\d]+ (января|февраля|мая|июня|июля|августа|сентября|октября|ноября|декабря)',convert_short_date,text)
     text = re.sub(r'-[\d]*[.][\d]+', convert_one_num_float, text)
     text = re.sub(r'[\d]*[.][\d]+', convert_one_num_float, text)
