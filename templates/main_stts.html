@@ -26,6 +26,14 @@
             {{ form.auto_num2word.label(class="form-label") }}
             {{ form.auto_num2word(class="form-control") }}
         </div>
+        <div class="mb-3">
+            {{ form.propertyMinLevel.label(class="form-label") }}
+            {{ form.propertyMinLevel(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.beep_file.label(class="form-label") }}
+            {{ form.beep_file(class="form-control") }}
+        </div>
         <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 {% endblock %}

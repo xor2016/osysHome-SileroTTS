@@ -9,4 +9,6 @@ class SettingsForm(FlaskForm):
     put_accent = SelectField('Автоударение', validators=[DataRequired()], choices=[0,1])
     put_yo = SelectField('Обработка Ё', validators=[DataRequired()], choices=[0,1])
     auto_num2word = SelectField('Авто перевод чисел в текст (эксперимент)', validators=[DataRequired()], choices=[0,1])
+    propertyMinLevel = StringField('Объект.Свойство, где устанавливается мин. уровень сообщений (например, SystemVar.minMsgLevel)')
+    beep_file = StringField('Звук, проигрываемый перед фразой - путь к файлу')
     submit = SubmitField('Submit')
