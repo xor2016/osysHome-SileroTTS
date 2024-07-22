@@ -1,10 +1,27 @@
 """ 
 # SileroTTS plugin 
 
-Plugin for TTS offline
+Plugin for offline TTS
 
-Needs to install numpy version < 2.0, torch 
+##Требует установки numpy версии < 2.0, torch 
+
 При вызове say(msg, 3, {'cache': 0}) файл в кэше после проговаривания удаляется - для одноразовых фраз
+При установке 'Автоперевод чисел в текст' подключается замена
+- чисел целых, дробных (до сотых)
+- интервалов (2-10 = два тире десять)
+
+целых
+
+- температуры (-1° = минус один градус)
+- % (-146% = минус сто сорок шесть процентов)
+- скорости м/с (2 м/с = два метра в секунду)
+- давления мм рт.ст.( 700 мм рт.ст. = семьсот миллиметров)
+
+дата/время
+
+- дата (2 мая = второе мая)
+- время (01:03 = один час три минуты)
+###Словарь для правки произношения - dictionary.py
 
 """
 import os
@@ -16,6 +33,7 @@ from app.core.lib.common import playSound
 from app.core.lib.object import getProperty
 from app.core.lib.cache import  findInCache, copyToCache, getCacheDir
 from plugins.SileroTTS.number2word import all_num_to_text
+from plugins.SileroTTS.dictionary import my_dict
 import time
 import datetime
 class SileroTTS(BasePlugin):
@@ -23,7 +41,7 @@ class SileroTTS(BasePlugin):
     def __init__(self,app):
         super().__init__(app,__name__)
         self.title = "SileroTTS"
-        self.description = """This is a plugin get voice offline by text"""
+        self.description = """Plugin offline TTS"""
         self.category = "App"
         self.version = "0.1"
         self.actions = ["say"]
@@ -65,16 +83,14 @@ class SileroTTS(BasePlugin):
                 minLevel = int(value)
         if level < minLevel:
             return 
-        if int(self.config.get("auto_num2word",1)) == 1:
-            message = all_num_to_text(message) # autoreplace nums to words
         hash = hashlib.md5(message.encode('utf-8')).hexdigest()
-
         # файл с кешированным аудио
         file_name = hash+'_silero.wav'
 
         cached_file_name = findInCache(file_name,self.name,True)
         # Проверяем, существует ли файл с кешированным аудио и не является ли он пустым
         if not cached_file_name or os.path.getsize(cached_file_name) == 0:
+         
             sample_rate = int(self.config.get("sample_rate", 24000)) #`sample_rate` should be in [8000, 24000, 48000]
             speaker = self.config.get("speaker",'xenia') #`speaker` should be in aidar, baya, kseniya, xenia, eugene, random
             put_accent = int(self.config.get("put_accent",1)) # автоударение
@@ -88,8 +104,14 @@ class SileroTTS(BasePlugin):
             if not os.path.isfile(local_file):
                 torch.hub.download_url_to_file('https://models.silero.ai/models/tts/ru/v4_ru.pt',local_file)  
             model = torch.package.PackageImporter(local_file).load_pickle("tts_models", "model")
-            model.to(device)    
-    
+            model.to(device)
+            # autoreplace nums to words
+            if int(self.config.get("auto_num2word",1)) == 1:
+                message = all_num_to_text(message) 
+            #replace from my_dict    
+            for old, new in my_dict.items():
+                message = message.replace(old, new)
+ 
             audio_path = model.save_wav(text=message,
                              speaker=speaker,
                              put_accent=put_accent,
