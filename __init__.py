@@ -30,7 +30,7 @@ import hashlib
 from app.core.main.BasePlugin import BasePlugin
 from plugins.SileroTTS.forms.SettingForms import SettingsForm
 from app.core.lib.common import playSound
-from app.core.lib.object import getProperty
+from app.core.lib.object import getProperty, getHistoryAggregate
 from app.core.lib.cache import  findInCache, copyToCache, getCacheDir
 from plugins.SileroTTS.number2word import all_num_to_text
 from plugins.SileroTTS.dictionary import my_dict
@@ -121,17 +121,18 @@ class SileroTTS(BasePlugin):
             copyToCache(audio_path,file_name,self.name + "/TTS",False)
             os.unlink(audio_path)
             cached_file_name = findInCache(file_name,self.name,True)
-            self.logger.info("Файл в кэше {}.".format(cached_file_name))
+            self.logger.debug("Файл в кэше {}.".format(cached_file_name))
         # Если файл существует и не является пустым, обрабатываем его
         if cached_file_name and os.path.getsize(cached_file_name):
             #beep enable?
             beep_file = self.config.get('beep_file','')
             if os.path.isfile(beep_file) and os.path.getsize(beep_file) > 0:
-                lastSay = getProperty('SystemVar.LastSay','changed') #время предыдущей фразы
-                delta = datetime.datetime.now() - lastSay
-                #if delta.total_seconds()>10:
-                playSound(beep_file, level)
-                time.sleep(2)
+                dt_end = datetime.datetime.now()
+                dt_start = dt_end - datetime.timedelta(seconds=25)
+                count = getHistoryAggregate("SystemVar.LastSay", dt_start, dt_end,'count') #что-нибудь ещё говорили в теч. 25 сек?
+                if count<=1:
+                    playSound(beep_file, level)
+                    time.sleep(2)
             playSound(cached_file_name, level)
             #длительность звучания, сек = размер файла, байт/sample_rate/2
             wait = os.path.getsize(cached_file_name)/int(self.config.get("sample_rate", 24000))/2
@@ -140,4 +141,4 @@ class SileroTTS(BasePlugin):
             	if args.get('cache', 1) == 0:
 	                time.sleep(5)
 	                os.unlink(cached_file_name)
-	                self.logger.info("Файл в кэше {} удалён.".format(cached_file_name))
+	                self.logger.debug("Файл в кэше {} удалён.".format(cached_file_name))
